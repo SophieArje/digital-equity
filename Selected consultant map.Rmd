@@ -1,0 +1,62 @@
+---
+title: "consultants"
+output: word_document
+date: "2023-08-09"
+---
+
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(dplyr)
+library(sf)
+library(sp)
+library(GGally)
+library(Hmisc)
+library(gridExtra)
+library(ggmap)
+library(leaflet)
+library(tigris)
+library(dplyr)
+library(rgeos)
+library(RColorBrewer)
+library(maps)
+
+```
+
+# ## set up Planners data
+
+```{r}
+Map_mun<-st_read('C:/Gis data/Municipal/ma_municipalities.shp')
+planner<-st_read('C:/Gis data/R data/Planners1.csv') 
+planner_agg<-merge(Map_mun,planner,by='municipal',all.x=TRUE)
+sf_planner_agg<-sf::st_transform(planner_agg, 4326)
+sf_planner_agg$Planner <- as.numeric(sf_planner_agg$Planner)
+```
+
+### map out planning consultant in MA
+
+```{r }
+
+print(sf::st_crs(planner_agg))
+sf_planner_agg<-sf::st_transform(planner_agg, 4326)
+planner_agg$ID <- as.numeric(planner_agg$ID)
+pal <- colorFactor (palette=c("orange", "blue", "darkblue", "yellow", "purple", "cadetblue", "darkgreen", "green", "pink", "red", "cyan", "brown"),
+      domain=planner_agg$Planner)
+mymap8 <- leaflet() %>%
+    addProviderTiles(providers$OpenStreetMap) %>%
+    setView(-71.089792, 42.311866, zoom = 9) %>%
+    addPolygons(data=sf_planner_agg, 
+                color = ~pal(planner_agg$Planner),
+                highlight = highlightOptions(weight = 3,
+                                           color = 'purple',fill=TRUE,
+                                           bringToFront = TRUE),
+                 popup = paste("Planner:", sf_planner_agg$Planner))%>%
+    addLegend (pal = pal,
+                    values = planner_agg$Planner,
+                    position = "topright",
+                                   title = "Selected Consultant",
+                                   opacity = 1)
+mymap8
+
+```
